@@ -1,4 +1,3 @@
-#! MLproject
 name: dvc_mlflow_pipeline
 
 conda_env: conda.yaml

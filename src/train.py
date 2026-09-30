@@ -1,5 +1,9 @@
 #! scr/train.py
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 import argparse
 import warnings
 import sys
@@ -14,15 +18,13 @@ from sklearn.linear_model import ElasticNet
 import mlflow
 import mlflow.sklearn
 
+
 def eval_metrics(actual, pred):
     rmse = np.sqrt(mean_squared_error(actual, pred))
     mae = mean_absolute_error(actual, pred)
     r2 = r2_score(actual, pred)
     return rmse, mae, r2
 
-# Start MLflow Tracking experiment
-mlflow.set_tracking_uri("sqlite:///mlflow.db")
-mlflow.set_experiment("DVC_MLFlow_Local_Pipeline")
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
@@ -57,7 +59,10 @@ if __name__ == "__main__":
     test_x = test.drop(target_features, axis=1)
     train_y = train[target_features]
     test_y = test[target_features]
-    
+
+    # Start MLflow Tracking experiment
+    # mlflow.set_tracking_uri("sqlite:///mlflow.db")
+    mlflow.set_experiment("DVC_MLFlow_Local_Pipeline")    
 
     with mlflow.start_run():
         # Train model - Fixed: ElasticNet takes l1_ratio, not l2_ratio
