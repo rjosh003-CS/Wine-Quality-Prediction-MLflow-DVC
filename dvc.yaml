@@ -1,0 +1,24 @@
+stages:
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+      - data/winequality-red.csv
+      - src/preprocess.py
+    params:
+      - base.random_state
+      - base.test_size
+    outs:
+      - data/processed/train.csv
+      - data/processed/test.csv
+
+  train:
+    cmd: python src/train.py
+    deps:
+      - data/processed/train.csv
+      - data/processed/test.csv
+      - src/train.py
+    params:
+      - train.alpha
+      - train.l1_ratio
+    outs:
+      - models/model.pkl

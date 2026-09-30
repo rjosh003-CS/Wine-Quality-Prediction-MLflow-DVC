@@ -1,0 +1,7 @@
+base:
+  random_state: 42
+  test_size: 0.25
+
+train:
+  alpha: 0.3
+  l1_ratio: 0.7
