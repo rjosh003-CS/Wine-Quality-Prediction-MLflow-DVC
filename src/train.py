@@ -18,6 +18,9 @@ def eval_metrics(actual, pred):
     r2 = r2_score(actual, pred)
     return rmse, mae, r2
 
+# Start MLflow Tracking experiment
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
+mlflow.set_experiment("DVC_MLFlow_Local_Pipeline")
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
@@ -33,7 +36,14 @@ if __name__ == "__main__":
     data_path = "data/winequality-red.csv"
     try:
         # Fixed: Wine quality dataset uses semicolon (;) delimiter
-        df = pd.read_csv(data_path, sep=";")
+        df = pd.read_csv(data_path, sep=",")
+
+        # Clean up any accidental whitespace in column names
+        df.columns = df.columns.str.strip()
+
+        # Debug print to verify columns if it happens again
+        print("Loaded columns:", df.columns.tolist())
+
     except Exception as e:
         print(f"Error Loading dataset from {data_path}: {e}", file=sys.stderr)
         sys.exit(1)
@@ -45,10 +55,7 @@ if __name__ == "__main__":
     test_x = test.drop(target_features, axis=1)
     train_y = train[target_features]
     test_y = test[target_features]
-
-    # Start MLflow Tracking experiment
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")
-    mlflow.set_experiment("DVC_MLFlow_Local_Pipeline")
+    
 
     with mlflow.start_run():
         # Train model - Fixed: ElasticNet takes l1_ratio, not l2_ratio
