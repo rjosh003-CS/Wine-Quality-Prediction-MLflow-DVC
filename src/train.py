@@ -1,3 +1,5 @@
+import itertools
+
 import pandas as pd
 import numpy as np
 import yaml
@@ -12,9 +14,10 @@ from sklearn.linear_model import ElasticNet
 import mlflow
 import mlflow.sklearn
 
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
+
 with open("params.yaml") as f:
     params = yaml.safe_load(f)
-
 
 def objective(trial):
     # Suggest hyperparameters to explore
@@ -83,46 +86,68 @@ def optuna_tuning():
 
 
 def custom_hyper_parameter_tuning():
-    alpha = params["train"]["alpha"]
-    l1_ratio = params["train"]["l1_ratio"]
+    # Read lists from params.yaml
+    alphas = params["train"]["alpha"]
+    l1_ratios = params["train"]["l1_ratio"]
+
+    # Ensure they are lists (in case a single value was passed by accident)
+    if not isinstance(alphas, list):
+        alphas = [alphas]
+    if not isinstance(l1_ratios, list):
+        l1_ratios = [l1_ratios]
 
     # Load the processed data
     processed_data_path = Path("data/processed")
-    train = pd.read_csv(processed_data_path /"train.csv")
+    train = pd.read_csv(processed_data_path / "train.csv")
     test = pd.read_csv(processed_data_path / "test.csv")
 
     target = "quality"
-    train_x = train.drop(target, axis = 1)
-    test_x = test.drop(target, axis = 1)
+    train_x = train.drop(target, axis=1)
+    test_x = test.drop(target, axis=1)
     train_y = train[[target]]
     test_y = test[[target]]
 
-    mlflow.set_experiment("DVC_MLflow_Local_Pipeline")
+    mlflow.set_experiment("DVC_MLflow_GridSearch")
 
-    with mlflow.start_run():
-        lr = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, random_state=42)
-        lr.fit(train_x, train_y)
+    best_rmse = float("inf")
+    best_model = None
+    best_params = {}
 
-        predicted_qualities = lr.predict(test_x)
-        (rmse, mae, r2) = eval_metrics(test_y, predicted_qualities)
+    # Parent run for the grid search
+    with mlflow.start_run(run_name="GridSearch_Parent"):
+        # Loop through every combination of alpha and l1_ratio
+        for alpha, l1_ratio in itertools.product(alphas, l1_ratios):
+            with mlflow.start_run(nested=True):
+                lr = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, random_state=42)
+                lr.fit(train_x, train_y)
 
-        # Log to MLflow
-        mlflow.log_param("alpha", alpha)
-        mlflow.log_param("l1_ratio", l1_ratio)
-        mlflow.log_metric("rmse", rmse)
-        mlflow.log_metric("r2", r2)
+                predicted_qualities = lr.predict(test_x)
+                rmse, mae, r2 = eval_metrics(test_y, predicted_qualities)
 
-        # Save model locally for DVC output tracking
-        os.makedirs("models", exist_ok=True)
-        joblib.dump(lr, "models/model.pkl")
-        # loging the model in the mlflow
-        mlflow.sklearn.log_model(
-            lr,
-            name = "model"
-        )
-        print("Pipeline execution and MLflow Logging completed successfully!")
+                # Log parameters and metrics for this combination
+                mlflow.log_param("alpha", alpha)
+                mlflow.log_param("l1_ratio", l1_ratio)
+                mlflow.log_metric("rmse", rmse)
+                mlflow.log_metric("r2", r2)
+
+                # Track the best performing model
+                if rmse < best_rmse:
+                    best_rmse = rmse
+                    best_model = lr
+                    best_params = {"alpha": alpha, "l1_ratio": l1_ratio}
+
+        # Log overall best metrics/params to parent run
+        mlflow.log_params(best_params)
+        mlflow.log_metric("best_rmse", best_rmse)
+
+    # Save the absolute best model locally for DVC output tracking
+    os.makedirs("models", exist_ok=True)
+    joblib.dump(best_model, "models/model.pkl")
+    mlflow.sklearn.log_model(best_model, name="model")
+    
+    print(f"Grid Search completed successfully! Best Params: {best_params} with RMSE: {best_rmse}")
 
 
 if __name__ == "__main__":
-    use_optuna=True
+    use_optuna=params["train"]["use_optuna"]
     optuna_tuning() if use_optuna else custom_hyper_parameter_tuning()

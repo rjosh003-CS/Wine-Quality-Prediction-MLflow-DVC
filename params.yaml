@@ -3,5 +3,14 @@ base:
   test_size: 0.25
 
 train:
-  alpha: [0.1, 0.3, 0.5, 1.0]
-  l1_ratio: [0.2, 0.5, 0.7, 0.8]
+  use_optuna: true
+  alpha:
+  - 0.1
+  - 0.3
+  - 0.5
+  - 1.0
+  l1_ratio:
+  - 0.2
+  - 0.5
+  - 0.7
+  - 0.8
