@@ -9,8 +9,8 @@ stages:
       size: 93599
     - path: src/preprocess.py
       hash: md5
-      md5: 28d3a0dd88c5971a9eae551593a3279e
-      size: 862
+      md5: 03366bf076a71e06275271b956f065af
+      size: 833
     params:
       params.yaml:
         base.random_state: 42
@@ -37,14 +37,22 @@ stages:
       size: 70227
     - path: src/train.py
       hash: md5
-      md5: 345d6e7b09e9f6599c8f024a0fffc9b0
-      size: 1843
+      md5: 30c685ecd93d24aad5ed2a63e75fc218
+      size: 4330
     params:
       params.yaml:
-        train.alpha: 0.3
-        train.l1_ratio: 0.7
+        train.alpha:
+        - 0.1
+        - 0.3
+        - 0.5
+        - 1.0
+        train.l1_ratio:
+        - 0.2
+        - 0.5
+        - 0.7
+        - 0.8
     outs:
     - path: models/model.pkl
       hash: md5
-      md5: b89956ee599fb9aba2a839ff1d617a5f
+      md5: b80f1c832574a57241fdadec07eadeff
       size: 1183
