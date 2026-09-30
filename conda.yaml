@@ -1,0 +1,12 @@
+name: dvc-mlflow-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - mlflow
+      - "dvc[all]"
+      - scikit-learn
+      - pandas
+      - numpy
