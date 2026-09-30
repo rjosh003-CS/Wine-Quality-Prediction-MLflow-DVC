@@ -1,0 +1,50 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+    - path: data/winequality-red.csv
+      hash: md5
+      md5: a990034a1ac4f327cb8f1e20ef102208
+      size: 93599
+    - path: src/preprocess.py
+      hash: md5
+      md5: 28d3a0dd88c5971a9eae551593a3279e
+      size: 862
+    params:
+      params.yaml:
+        base.random_state: 42
+        base.test_size: 0.25
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 48de46fc1c8504b2675c50b6732f3b89
+      size: 23519
+    - path: data/processed/train.csv
+      hash: md5
+      md5: bb76b481edc2492ce8100cb3e4de218e
+      size: 70227
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 48de46fc1c8504b2675c50b6732f3b89
+      size: 23519
+    - path: data/processed/train.csv
+      hash: md5
+      md5: bb76b481edc2492ce8100cb3e4de218e
+      size: 70227
+    - path: src/train.py
+      hash: md5
+      md5: 345d6e7b09e9f6599c8f024a0fffc9b0
+      size: 1843
+    params:
+      params.yaml:
+        train.alpha: 0.3
+        train.l1_ratio: 0.7
+    outs:
+    - path: models/model.pkl
+      hash: md5
+      md5: b89956ee599fb9aba2a839ff1d617a5f
+      size: 1183
