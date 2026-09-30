@@ -1,3 +1,5 @@
+#! scr/train.py
+
 import argparse
 import warnings
 import sys
